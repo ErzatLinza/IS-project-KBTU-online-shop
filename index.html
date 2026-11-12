@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#071d49">
+    <title>KBTU Campus Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header">
+    <a class="brand" href="#shop" onclick="showPage('shop'); return false;" aria-label="KBTU Campus Store home">
+        <span class="brand-mark">K</span><span class="brand-copy"><b>KBTU</b><small>CAMPUS STORE</small></span>
+    </a>
+    <nav aria-label="Main navigation">
+        <button class="nav-link active" data-page="shop" onclick="showPage('shop')">Shop</button>
+        <button class="nav-link" data-page="orders" onclick="showPage('orders')">My Orders</button>
+        <button class="nav-link" data-page="admin" onclick="showPage('admin')">Inventory</button>
+        <button class="nav-link" data-page="dashboard" onclick="showPage('dashboard')">BI Dashboard</button>
+    </nav>
+    <button class="cart-button" onclick="showPage('shop'); document.getElementById('cart').scrollIntoView({behavior:'smooth'});">
+        <span aria-hidden="true">♧</span> Bag <span id="cart-count" class="cart-count">0</span>
+    </button>
+</header>
+
+<main>
+    <section id="shop" class="page active">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow light">MADE FOR THE BLUE &amp; WHITE</p>
+                <h1>Carry your<br><em>campus spirit.</em></h1>
+                <p>Everyday essentials for the people who make KBTU feel like home.</p>
+                <button class="light-btn" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Explore the collection <span>↗</span></button>
+            </div>
+            <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-seal">K<br><small>BTU</small></div><span class="spark spark-one">✳</span><span class="spark spark-two">✦</span><span class="hero-caption">ALMATY · EST. 2001</span></div>
+            <div class="hero-index">01 <span></span> 03</div>
+        </section>
+
+        <section id="catalog" class="catalog-section">
+            <div class="section-heading">
+                <div><p class="eyebrow">THE CAMPUS EDIT</p><h2>Find your<br><span>daily uniform.</span></h2></div>
+                <p class="section-note">Thoughtful goods for lectures, late study sessions<br>and everywhere campus life takes you.</p>
+            </div>
+            <div class="catalog-tools">
+                <div id="category-filters" class="category-filters" aria-label="Filter by category"></div>
+                <label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search the collection" oninput="renderProducts()" aria-label="Search products"></label>
+            </div>
+            <p id="connection-status" class="connection-status" role="status">Loading the product collection…</p>
+            <div id="products" class="product-grid"></div>
+        </section>
+
+        <section id="cart" class="cart-section">
+            <div class="cart-heading"><div><p class="eyebrow">READY WHEN YOU ARE</p><h2>Your bag</h2></div><span class="small-note">KBTU Campus Store · Almaty</span></div>
+            <div id="cart-items"></div>
+            <div class="cart-bottom"><p>Total <b><span id="cart-total">0</span> ₸</b></p>
+                <div class="checkout"><input id="customer-name" placeholder="Your name" aria-label="Your name"><input id="customer-email" type="email" placeholder="Email address" aria-label="Email address"><button class="primary-btn" onclick="checkout()">Place order <span>→</span></button></div>
+            </div>
+        </section>
+    </section>
+
+    <section id="orders" class="page inner-page">
+        <p class="eyebrow">YOUR CAMPUS STORE ACTIVITY</p><h1>My Orders</h1><p class="muted page-intro">Your order history is saved in this browser.</p>
+        <div id="order-list" class="panel"></div>
+    </section>
+
+    <section id="admin" class="page inner-page">
+        <p class="eyebrow">STORE OPERATIONS</p><h1>Inventory</h1><p class="muted page-intro">A quick view of stock and customer orders.</p>
+        <div class="stats-grid">
+            <article class="stat-card"><p>Total orders</p><h2 id="admin-orders">0</h2></article><article class="stat-card"><p>Revenue</p><h2 id="admin-revenue">0 ₸</h2></article><article class="stat-card"><p>Products</p><h2 id="admin-products">0</h2></article><article class="stat-card"><p>Low stock</p><h2 id="admin-low-stock">0</h2></article>
+        </div>
+        <div class="panel"><div class="panel-heading"><div><p class="eyebrow">STOCK CONTROL</p><h2>Product inventory</h2></div></div><div id="inventory-list"></div></div>
+        <div class="panel"><div class="panel-heading"><div><p class="eyebrow">ADD TO THE COLLECTION</p><h2>New product</h2></div></div>
+            <div class="add-product"><input id="new-name" placeholder="Product name"><select id="new-category" aria-label="Product category"><option>Apparel</option><option>Accessories</option><option>Stationery</option></select><input id="new-price" type="number" min="1" placeholder="Price (₸)"><input id="new-stock" type="number" min="0" placeholder="Stock"><button class="primary-btn" onclick="addProduct()">Add product</button></div>
+        </div>
+        <div class="panel"><div class="panel-heading"><div><p class="eyebrow">FULFILMENT</p><h2>Customer orders</h2></div></div><div id="admin-order-list"></div></div>
+    </section>
+
+    <section id="dashboard" class="page inner-page">
+        <div class="dashboard-title"><div><p class="eyebrow">KBTU CAMPUS STORE · BUSINESS INTELLIGENCE</p><h1>Know your<br><span>next move.</span></h1><p class="muted page-intro">A live view of orders and stock recorded in this browser.</p></div>
+            <label class="range-select">Reporting period<select id="report-period" onchange="renderDashboard()"><option value="all">All time</option><option value="30">Last 30 days</option><option value="7">Last 7 days</option></select></label>
+        </div>
+        <div class="stats-grid bi-stats">
+            <article class="stat-card"><p>Gross sales</p><h2 id="bi-revenue">0 ₸</h2><small>For selected period</small></article><article class="stat-card"><p>Orders</p><h2 id="bi-orders">0</h2><small>Completed checkouts</small></article><article class="stat-card"><p>Average order</p><h2 id="bi-average">0 ₸</h2><small>Sales per order</small></article><article class="stat-card"><p>Units in stock</p><h2 id="bi-stock">0</h2><small id="bi-low-stock-note">Across the collection</small></article>
+        </div>
+        <div class="dashboard-grid">
+            <article class="dashboard-card chart-card"><div class="panel-heading"><div><p class="eyebrow">WHAT'S MOVING</p><h2>Units sold by product</h2></div><span class="chart-key"><i></i> Units</span></div><div id="sales-chart" class="chart-content"></div></article>
+            <article class="dashboard-card category-card"><div class="panel-heading"><div><p class="eyebrow">COLLECTION MIX</p><h2>Sales by category</h2></div></div><div id="category-chart" class="category-chart"></div></article>
+            <article class="dashboard-card insight-card"><div class="panel-heading"><div><p class="eyebrow">SIGNALS TO WATCH</p><h2>Store insights</h2></div></div><div id="insights"></div></article>
+            <article class="dashboard-card dss-card"><div class="panel-heading"><div><p class="eyebrow">DECISION SUPPORT</p><h2>Stock planning</h2></div><span class="dss-badge">WHAT IF?</span></div><p class="muted">Adjust expected demand to see which products may need a restock.</p><label class="demand-label" for="demand">Demand increase <b><span id="demand-value">20</span>%</b></label><input id="demand" type="range" min="0" max="100" value="20" oninput="updateDSS()"><div id="dss-result"></div></article>
+        </div>
+        <div class="analytics-note"><span class="note-icon">i</span><p><b>About this dashboard</b><br>Figures are calculated from demo orders and inventory saved in this browser. Product and order records are not yet connected to a shared database.</p></div>
+    </section>
+</main>
+
+<footer><a class="footer-brand" href="#shop" onclick="showPage('shop'); return false;">KBTU <span>CAMPUS STORE</span></a><p>Blue &amp; white, wherever you go. &nbsp;·&nbsp; Academic project prototype</p><p class="footer-small">Demo products and transactions · © 2026</p></footer>
+<script src="app.js"></script>
+</body>
+</html>
