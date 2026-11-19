@@ -98,4 +98,152 @@
 <footer><a class="footer-brand" href="#shop" onclick="showPage('shop'); return false;">KBTU <span>CAMPUS STORE</span></a><p>Blue &amp; white, wherever you go. &nbsp;·&nbsp; Academic project prototype</p><p class="footer-small">Demo products and transactions · © 2026</p></footer>
 <script src="app.js"></script>
 </body>
+
+Self-pickup fields in index.html
+<label class="pickup-field">
+  Pickup date
+  <input id="pickup-date" type="date" required>
+</label>
+
+<label class="pickup-field">
+  Pickup time
+  <input id="pickup-time" type="time" required>
+</label>
+
+<label class="pickup-field">
+  Pickup location
+  <select id="pickup-location">
+    <option value="Main Hall">Main Hall</option>
+    <option value="Student Office">Student Office</option>
+  </select>
+</label>
+
+
+An interface for staff members to look up an order by its code:
+<div class="panel pickup-panel">
+  <h2>Pickup desk</h2>
+
+  <div class="pickup-lookup">
+    <input id="pickup-code-input" placeholder="KBTU-4821">
+    <button class="primary-btn" onclick="findPickupOrder()">
+      Find order
+    </button>
+  </div>
+
+  <div id="pickup-lookup-result"></div>
+
+  <p>Confirmed → Prepared → Ready for pickup → Collected</p>
+</div>
+
+Sending the date, time, and location — app.js
+const pickupDate = document.getElementById("pickup-date").value;
+const pickupTime = document.getElementById("pickup-time").value;
+const pickupLocation = document.getElementById("pickup-location").value;
+const response = await fetch("/api/orders", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    customerName: name,
+    customerEmail: email,
+    pickupDate,
+    pickupTime,
+    pickupLocation,
+    items: cart.map(item => ({
+      productId: item.id,
+      quantity: item.quantity
+    }))
+  })
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+  throw new Error(result.error || "Could not place the order.");
+}
+
+alert(`Order saved! Pickup code: ${result.pickup_code}`);
+
+server.js:
+await pool.query(`
+  ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS pickup_date DATE,
+    ADD COLUMN IF NOT EXISTS pickup_time TIME,
+    ADD COLUMN IF NOT EXISTS pickup_location TEXT,
+    ADD COLUMN IF NOT EXISTS pickup_code TEXT
+`);
+
+await pool.query(`
+  CREATE UNIQUE INDEX IF NOT EXISTS orders_pickup_code_unique
+  ON orders (pickup_code)
+  WHERE pickup_code IS NOT NULL
+`);
+const orderResult = await client.query(
+  `INSERT INTO orders
+     (customer_name, customer_email, total,
+      pickup_date, pickup_time, pickup_location)
+   VALUES ($1, $2, $3, $4, $5, $6)
+   RETURNING id`,
+  [customerName, customerEmail, total,
+   pickupDate, pickupTime, pickupLocation]
+);
+
+const orderId = orderResult.rows[0].id;
+const pickupCode = KBTU-${String(orderId).padStart(4, "0")};
+
+await client.query(
+  "UPDATE orders SET pickup_code = $1 WHERE id = $2",
+  [pickupCode, orderId]
+);
+
+
+app.get("/api/pickups/:code", async (req, res) => {
+  const code = String(req.params.code).trim().toUpperCase();
+
+  const result = await pool.query(
+    `SELECT id, customer_name AS customer, status, pickup_code,
+            pickup_date, pickup_time, pickup_location
+     FROM orders
+     WHERE pickup_code = $1`,
+    [code]
+  );
+
+  if (!result.rowCount) {
+    return res.status(404).json({ error: "Pickup code not found." });
+  }
+
+  res.json(result.rows[0]);
+});
+
+app.patch("/api/pickups/:code/advance", async (req, res) => {
+  const code = String(req.params.code).trim().toUpperCase();
+
+  const nextStatus = {
+    Confirmed: "Prepared",
+    Prepared: "Ready for pickup",
+    "Ready for pickup": "Collected"
+  };
+
+  const result = await pool.query(
+    "SELECT id, status FROM orders WHERE pickup_code = $1",
+    [code]
+  );
+
+  if (!result.rowCount) {
+    return res.status(404).json({ error: "Pickup code not found." });
+  }
+
+  const order = result.rows[0];
+  const next = nextStatus[order.status];
+
+  if (!next) {
+    return res.status(409).json({ error: "Order already collected." });
+  }
+
+  const updated = await pool.query(
+    "UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, status",
+    [next, order.id]
+  );
+
+  res.json(updated.rows[0]);
+});
 </html>
